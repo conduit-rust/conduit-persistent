@@ -30,3 +30,18 @@ impl Persisted {
     }
 }
 
+fn new_store() -> PersistentStore { HashMap::new() }
+
+impl Middleware for Persisted {
+    fn before(&self, req: &mut Request) -> Result<(), Box<Show>> {
+        let store = req.mut_extensions()
+            .find_or_insert_with("persistent.store",
+                                 |_| box new_store() as Box<Any>);
+        store.as_mut::<PersistentStore>().unwrap().insert(
+            self.key.clone(),
+            self.data.clone()
+        );
+        Ok(())
+    }
+}
+
