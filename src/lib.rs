@@ -45,3 +45,23 @@ impl Middleware for Persisted {
     }
 }
 
+pub fn lookup_persistent(req: &mut Request, key: String) -> Option<Shared<BoundAny>> {
+    match req.mut_extensions().find_mut(&"persistent.store") {
+        Some(store) => store.as_mut::<PersistentStore>()
+                .expect("Expected a PersistentStore to be stored at persistent.store.")
+                .find(&key)
+                .and_then(|k| Some(k.clone())),
+        None => None
+    }
+}
+
+pub trait LookupPersistent {
+    fn lookup_persistent(self, String) -> Option<Shared<BoundAny>>;
+}
+
+impl<'a> LookupPersistent for &'a mut Request {
+    fn lookup_persistent(self, key: String) -> Option<Shared<BoundAny>> {
+        lookup_persistent(self, key)
+    }
+}
+
